@@ -3774,10 +3774,15 @@ static void mdy_brightness_set_on_level(gint hbm_and_level)
     mdy_hbm_level_wanted = new_hbm_level;
     mdy_hbm_rethink();
 
-    /* Adjust the value, since it's a percentage value, and filter out
-     * the high brightness setting
+    /* Map from: 1-100% to: 1-hw_max
+     *
+     * Plain "hw_max * percent / 100" never yields hw level 1 when
+     * hw_max > 100 and yields zero for low percentages when
+     * hw_max < 100 (e.g. with a short BrightnessMapping).
      */
-    new_brightness = (mdy_brightness_level_maximum * new_brightness) / 100;
+    new_brightness = mce_xlat_int(1, 100,
+                                  1, mdy_brightness_level_maximum,
+                                  new_brightness);
 
     /* The value we have here is for non-dimmed screen only */
     if( mdy_brightness_level_display_on != new_brightness ) {
